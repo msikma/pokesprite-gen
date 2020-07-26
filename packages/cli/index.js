@@ -16,7 +16,7 @@ const parser = makeArgParser({
   version: pkgData.version,
   addHelp: true,
   longHelp: `At least one of --add-{pokemon,inventory,misc} must be passed to generate a
-sprite. It's recommended to make a separate sprite sheet for each of those
+sprite. It's recommended to make a separate spritesheet for each of those
 three types, as needed. The 'misc' sprites can not be combined with the
 Pokémon and inventory sprite in the same file.
 `,

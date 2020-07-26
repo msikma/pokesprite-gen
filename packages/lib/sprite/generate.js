@@ -26,7 +26,7 @@ const generateSprite = async (assetTypes, { fileInfo }, { optsOutput }) => {
 }
 
 /**
- * Returns a list of file information for each file that we're adding to the sprite sheet.
+ * Returns a list of file information for each file that we're adding to the spritesheet.
  */
 const pickFiles = ({ addPokemon, addInventory, addMisc }, { fileInfo }) => {
   const pickedInfo = {}

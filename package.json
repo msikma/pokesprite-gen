@@ -1,7 +1,7 @@
 {
   "name": "pokesprite-gen-monorepo",
   "version": "1.0.0",
-  "description": "Sprite sheet generator for efficiently including PokéSprite images in websites",
+  "description": "Spritesheet generator for efficiently including PokéSprite images in websites",
   "private": true,
   "keywords": [],
   "workspaces": [
