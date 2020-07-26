@@ -1,0 +1,27 @@
+{
+  "name": "pokesprite-gen-monorepo",
+  "version": "1.0.0",
+  "description": "Sprite sheet generator for efficiently including PokéSprite images in websites",
+  "private": true,
+  "keywords": [],
+  "workspaces": [
+    "packages/*"
+  ],
+  "homepage": "https://github.com/msikma/pokesprite-gen",
+  "repository": "git+https://github.com/msikma/pokesprite-gen",
+  "author": "Michiel Sikma <michiel@sikma.org>",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest"
+  },
+  "bin": {
+    "pokesprite-gen.js": "packages/cli/index.js"
+  },
+  "engines": {
+    "node": ">=10.0.0"
+  },
+  "devDependencies": {
+    "jest": "^24.9.0"
+  },
+  "dependencies": {}
+}
