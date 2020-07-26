@@ -1,6 +1,6 @@
 {
   "name": "pokesprite-gen-lib",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Spritesheet generator for efficiently adding PokéSprite images to websites",
   "homepage": "https://github.com/msikma/pokesprite-gen",
   "repository": "git+https://github.com/msikma/pokesprite-gen",
