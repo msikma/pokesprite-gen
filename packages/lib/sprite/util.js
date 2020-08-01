@@ -18,7 +18,17 @@ const pokemonDirSet = dir => {
   return setMatches ? setMatches.slice(-2).join('-') : null
 }
 
+/** Returns a basename (a slug for use in making a CSS class) from a filename. */
+const getBaseFromFn = fn => {
+  // 'ribbon/ability-ribbon.png' -> [ "ribbon/ability-ribbon.png", "ribbon/", "ability-ribbon" ]
+  // 'ability-ribbon.png' -> [ "ribbon/ability-ribbon.png", undefined, "ability-ribbon" ]
+  const matches = fn.match(/(.*\/)?(.*)\..*$/)
+  if (!matches) return null
+  return matches[2]
+}
+
 module.exports = {
   keyList,
-  pokemonDirSet
+  pokemonDirSet,
+  getBaseFromFn
 }

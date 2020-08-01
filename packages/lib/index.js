@@ -5,6 +5,7 @@ const { pick } = require('lodash')
 const { log } = require('dada-cli-tools/log')
 const { getSpriteFiles } = require('./sprite/assets')
 const { generateSprite } = require('./sprite/generate')
+const { generateHTML } = require('./sprite/html')
 const { saveAssets, saveStandardBuildAssets } = require('./sprite/save')
 
 /** List of special build functions. */
@@ -16,11 +17,12 @@ const builds = {
     return saveAssets(spriteData, { optsOutput })
   },
   /** Standard build - creates separate files for Pokémon, inventory items and misc sprites. Published to npm. */
-  buildStandard: async ({ optsOutput }) => {
-    const assetData = await getSpriteFiles({ addPokemon: true, addInventory: true, addMisc: true }, { optsPokemon: { pokemonGen: '8' } })
+  buildStandard: async ({ optsPokemon, optsInventory, optsMisc, optsOutput }) => {
+    const assetData = await getSpriteFiles({ addPokemon: true, addInventory: true, addMisc: true }, { optsPokemon: { ...optsPokemon, pokemonGen: '8' }, optsInventory, optsMisc })
     const pokemon = await generateSprite({ addPokemon: true }, assetData, { optsOutput })
     const inventory = await generateSprite({ addInventory: true }, assetData, { optsOutput })
     const misc = await generateSprite({ addMisc: true }, assetData, { optsOutput })
+    const overview = await generateHTML({ addPokemon: true, addInventory: true, addMisc: true }, { pokemon, inventory, misc })
     return saveStandardBuildAssets({ pokemon, inventory, misc }, { optsOutput })
   }
 }
@@ -40,7 +42,7 @@ const extractArgs = args => {
   return {
     assetTypes: pick(args, ['addPokemon', 'addInventory', 'addMisc']),
     optsPokemon: pick(args, ['noPokemonRegular', 'noPokemonShiny', 'noPokemonForms', 'noPokemonGender', 'noPokemonEtc', 'pokemonGen']),
-    optsInventory: pick(args, ['inventoryGroups']),
+    optsInventory: pick(args, ['inventoryGroups', 'addOutline']),
     optsMisc: pick(args, ['miscGroups']),
     optsOutput: pick(args, ['noCSS', 'noImage', 'noHTML', 'outDir', 'outSuffix', 'clsLanguage', 'clsBasename'])
   }

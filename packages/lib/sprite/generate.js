@@ -16,10 +16,11 @@ const { generateCSS } = require('./css')
 const generateSprite = async (assetTypes, { fileInfo }, { optsOutput }) => {
   const [spriteFileInfo, spriteFileList] = pickFiles(assetTypes, { fileInfo })
   const sprite = await runSpritesmith(spriteFileList)
-  const [groupRules, spriteRules] = processRules(sprite.coordinates, spriteFileInfo, optsOutput.clsBasename)
+  const [groupRules, spriteRules, overviewItems] = processRules(sprite.coordinates, spriteFileInfo, optsOutput.clsBasename)
   const css = generateCSS(groupRules, spriteRules)
   return {
     css,
+    items: overviewItems,
     image: { ...sprite.properties },
     buffer: sprite.image
   }
@@ -38,7 +39,7 @@ const pickFiles = ({ addPokemon, addInventory, addMisc }, { fileInfo }) => {
 
 /** Generates both group and individual sprite rules. */
 const processRules = (...args) => {
-  return [getGroupRules(...args), getSpriteRules(...args)]
+  return [getGroupRules(...args), ...getSpriteRules(...args)]
 }
 
 /** Generates group rules. */
@@ -60,6 +61,12 @@ const getGroupRules = (rawCoordinates, fileInfo, baseClass) => {
       rules = { 'width': `${coords.width}px`, 'height': `${coords.height}px` }
       groupRules[info.group] = { selector, rules, resolution: '1x' }
     }
+    if (info.type === 'misc') {
+      if (groupRules[info.group]) continue
+      selector = `.${baseClass}.${info.group}`
+      rules = {}
+      groupRules[info.group] = { selector, rules, resolution: '1x' }
+    }
   }
   return Object.values(groupRules)
 }
@@ -67,27 +74,35 @@ const getGroupRules = (rawCoordinates, fileInfo, baseClass) => {
 /** Generates individual sprite rules. */
 const getSpriteRules = (rawCoordinates, fileInfo, baseClass) => {
   const spriteRules = []
+  const overviewLines = []
   for (const [path, coords] of Object.entries(rawCoordinates)) {
     const info = fileInfo[path]
     
-    let selector, rules
+    let selectorBase, selector, rules
     if (info.type === 'pokemon') {
-      selector = `.${baseClass}.${info.name}`
-      rules = { 'background-position-x': `-${coords.x}px`, 'background-position-y': `-${coords.y}px` }
-      spriteRules.push({ selector, rules })
+      // Iterate over form aliases. '$' is the default, others are aliases of the current file.
+      for (const formName of info.formAliases) {
+        selectorBase = `${formName === '$' ? info.name : `${info.basename}-${formName}`}${info.group === 'shiny' ? '.shiny' : ''}`
+        selector = `.${baseClass}.${selectorBase}`
+        rules = { 'background-position-x': `-${coords.x}px`, 'background-position-y': `-${coords.y}px` }
+        spriteRules.push({ selector, rules })
+        overviewLines.push({ selector: `.${baseClass}.pokemon.${selectorBase}`, info })
+      }
     }
     if (info.type === 'inventory') {
       selector = `.${baseClass}.${info.group}.${info.name}`
       rules = { 'background-position-x': `-${coords.x}px`, 'background-position-y': `-${coords.y}px` }
       spriteRules.push({ selector, rules })
+      overviewLines.push({ selector, info })
     }
     if (info.type === 'misc') {
       selector = `.${baseClass}.${info.group}.${info.name}`
       rules = { 'width': `${coords.width}`, height: `${coords.height}`, 'background-position-x': `-${coords.x}px`, 'background-position-y': `-${coords.y}px` }
       spriteRules.push({ selector, rules })
+      overviewLines.push({ selector, info })
     }
   }
-  return spriteRules
+  return [spriteRules, overviewLines]
 }
 
 module.exports = {

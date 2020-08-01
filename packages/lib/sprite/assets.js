@@ -2,12 +2,15 @@
 // © MIT license
 
 const fg = require('fast-glob')
-const { keyList, pokemonDirSet } = require('./util.js')
+const { splitFilename } = require('dada-cli-tools/util/fs')
+const { keyList, pokemonDirSet, getBaseFromFn } = require('./util.js')
 
 /** The Pokémon data file containing a list of species and forms. */
 const dataPokedex = require('pokesprite-images/data/pokemon.json')
 /** Other Pokémon-sized sprites (egg, egg-manaphy, etc.). */
 const dataPokemonEtc = require('pokesprite-images/data/other-sprites.json')
+/** Miscellaneous sprites (ribbons, marks, etc.). */
+const dataMisc = require('pokesprite-images/data/misc.json')
 /** Path to the PokéSprite files. */
 const pathPokeSprite = require('pokesprite-images').baseDir
 
@@ -24,8 +27,8 @@ const PKM_FILE_EXT = 'png'
  */
 const getSpriteFiles = async ({ addPokemon, addInventory, addMisc }, { optsPokemon, optsInventory, optsMisc }) => {
   const [dataPokemon, pokemonFiles] = await getPokemonFiles(addPokemon, optsPokemon, 'pokemon', `pokemon-gen${optsPokemon.pokemonGen}`)
-  const [dataInventoryGroups, inventoryFiles] = await getInventoryFiles(addInventory)
-  const [dataMiscGroups, miscFiles] = await getMiscFiles(addMisc)
+  const [dataInventoryGroups, inventoryFiles] = await getInventoryFiles(addInventory, optsInventory.inventoryGroups, optsInventory.addOutline)
+  const [dataMiscGroups, miscFiles] = await getMiscFiles(addMisc, optsMisc.miscGroups)
   const fileInfo = { pokemonFiles, inventoryFiles, miscFiles }
 
   return {
@@ -54,7 +57,7 @@ const getSpriteFiles = async ({ addPokemon, addInventory, addMisc }, { optsPokem
  * Returns a list of all Pokémon, and an object containing sprite data by file path.
  */
 const getPokemonFiles = async (includeFiles, opts = {}, type = 'pokemon', dir = 'pokemon-gen8') => {
-  if (!includeFiles) return []
+  if (!includeFiles) return [[], {}]
   const dex = Object.keys(dataPokedex).sort()
   const allFiles = {}
   const pokemon = []
@@ -78,6 +81,9 @@ const getPokemonFiles = async (includeFiles, opts = {}, type = 'pokemon', dir = 
         if (!addForms && formName !== '$') continue
         if (addForms && formData.is_alias_of) continue
 
+        // Get a list of form names that are aliases of this one. E.g. ['totem', 'totem-alola'] for Raticate's default form.
+        const formAliases = Object.entries(pkm[set].forms).filter(([fN, fD]) => fD.is_alias_of === formName).map(f => f[0])
+
         // Iterate over only the 'default' gender, or it plus a female gender sprite.
         const genderList = addGenders && formData.has_female ? ['$', 'f'] : ['$']
         for (const genderName of genderList) {
@@ -88,6 +94,8 @@ const getPokemonFiles = async (includeFiles, opts = {}, type = 'pokemon', dir = 
             dir,
             data: pkm,
             name: base,
+            group: groupName,
+            formAliases: ['$', ...formAliases],
             basename,
             ext: PKM_FILE_EXT,
             path
@@ -151,15 +159,49 @@ const globAssets = async (includeFiles, type, dir, onlyGroups = null) => {
 /**
  * Returns miscellaneous sprites (ribbons, marks, etc.).
  */
-const getMiscFiles = async (includeFiles, groups = null) => {
-  return globAssets(includeFiles, 'misc', 'misc', groups)
+const getMiscFiles = async (includeFiles, onlyGroups = null, dir = 'misc', type = 'misc', only1x = true) => {
+  if (!includeFiles) return [{}, {}]
+  const allFiles = {}
+  const groups = {}
+  
+  for (const [groupName, groupFiles] of Object.entries(dataMisc)) {
+    if (onlyGroups != null && !~onlyGroups.indexOf(groupName)) continue
+    if (!groups[groupName]) groups[groupName] = []
+
+    for (const item of groupFiles) {
+      for (const [gen, res] of Object.entries(item.resolution)) {
+        if (res !== '1x' && only1x) continue
+        const filesGen = item.files[gen]
+        const files = Array.isArray(filesGen) ? filesGen : [filesGen]
+        for (const file of files) {
+          const path = `${pathPokeSprite}/${dir}/${file}`
+          const name = getBaseFromFn(file)
+          const { extension } = splitFilename(file)
+          const fileData = {
+            type,
+            dir,
+            data: item,
+            name,
+            group: groupName,
+            ext: extension,
+            path
+          }
+
+          groups[groupName].push(fileData)
+          allFiles[path] = fileData
+        }
+      }
+    }
+  }
+
+  return [groups, allFiles]
 }
 
 /**
  * Returns inventory sprites.
  */
-const getInventoryFiles = async (includeFiles, addOutline = false, groups = null) => {
-  return globAssets(includeFiles, 'inventory', addOutline ? 'items-outline' : 'items', groups)
+const getInventoryFiles = async (includeFiles, onlyGroups = null, addOutline = false) => {
+  return globAssets(includeFiles, 'inventory', addOutline ? 'items-outline' : 'items', onlyGroups)
 }
 
 module.exports = {

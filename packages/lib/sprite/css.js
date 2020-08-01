@@ -2,7 +2,10 @@
 // © MIT license
 
 /**
+ * Runs through groups and individual sprites and generates CSS for them.
  * 
+ * Each sprite belongs to a group, and the group contains any base rules that apply
+ * to all items (such as the 'background-image' for the sprite).
  */
 const generateCSS = (groupRules, spriteRules) => {
   const buffer = []

@@ -19,6 +19,10 @@ const parser = makeArgParser({
 sprite. It's recommended to make a separate spritesheet for each of those
 three types, as needed. The 'misc' sprites can not be combined with the
 Pokémon and inventory sprite in the same file.
+
+In most cases, you'll want to generate a standard build which makes separate
+files for Pokémon, inventory items and misc items, and generates an overview
+file with instructions for making these items appear.
 `,
   description: ensurePeriod(pkgData.description),
   epilog: 'For more information: <https://github.com/msikma/pokesprite>'
@@ -35,7 +39,7 @@ parser.addArgument('--no-pokemon-etc', { help: 'Omits misc. sprites (egg, unknow
 
 parser.addSection('Inventory options:')
 parser.addArgument('--add-inventory', { help: 'Includes inventory sprites in the output.', action: 'storeTrue', dest: 'addInventory' })
-parser.addArgument('--add-outline', { help: 'Adds a Gen 8 style white outline around the sprites.', action: 'storeTrue', dest: 'addInventory' })
+parser.addArgument('--add-outline', { help: 'Adds a Gen 8 style white outline around the sprites.', action: 'storeTrue', dest: 'addOutline' })
 parser.addArgument('--inventory-groups', { help: 'List of inventory groups to include (defaults to all).', metavar: 'GROUP', nargs: '+', dest: 'inventoryGroups' })
 
 parser.addSection('Miscellaneous sprite options:')
