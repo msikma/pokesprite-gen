@@ -13,6 +13,8 @@ const dataPokemonEtc = require('pokesprite-images/data/other-sprites.json')
 const dataMisc = require('pokesprite-images/data/misc.json')
 /** Path to the PokéSprite files. */
 const pathPokeSprite = require('pokesprite-images').baseDir
+/** PokéSprite package file (for the version). */
+const pkgPokeSprite = require('pokesprite-images/package.json')
 
 /** The slug language used for filenames. */
 const PKM_FILE_SLUG_LANG = 'eng'
@@ -25,7 +27,7 @@ const PKM_FILE_EXT = 'png'
  * This includes information on Pokémon, inventory items and miscellaneous sprites,
  * and lists of files to include in the spritesheet.
  */
-const getSpriteFiles = async ({ addPokemon, addInventory, addMisc }, { optsPokemon, optsInventory, optsMisc }) => {
+const getSpriteAssets = async ({ addPokemon, addInventory, addMisc }, { optsPokemon, optsInventory, optsMisc }) => {
   const [dataPokemon, pokemonFiles] = await getPokemonFiles(addPokemon, optsPokemon, 'pokemon', `pokemon-gen${optsPokemon.pokemonGen}`)
   const [dataInventoryGroups, inventoryFiles] = await getInventoryFiles(addInventory, optsInventory.inventoryGroups, optsInventory.addOutline)
   const [dataMiscGroups, miscFiles] = await getMiscFiles(addMisc, optsMisc.miscGroups)
@@ -85,7 +87,7 @@ const getPokemonFiles = async (includeFiles, opts = {}, type = 'pokemon', dir = 
         const formAliases = Object.entries(pkm[set].forms).filter(([fN, fD]) => fD.is_alias_of === formName).map(f => f[0])
 
         // Iterate over only the 'default' gender, or it plus a female gender sprite.
-        const genderList = addGenders && formData.has_female ? ['$', 'f'] : ['$']
+        const genderList = addGenders && formData.has_female ? ['m', 'f'] : ['$']
         for (const genderName of genderList) {
           const base = [basename, formName === '$' ? null : formName].filter(i => i).join('-')
           const path = `${pathPokeSprite}/${dir}/${groupName}${genderName === 'f' ? '/female' : ''}/${base}.${PKM_FILE_EXT}`
@@ -96,8 +98,13 @@ const getPokemonFiles = async (includeFiles, opts = {}, type = 'pokemon', dir = 
             name: base,
             group: groupName,
             formAliases: ['$', ...formAliases],
+            formData,
+            genderName,
+            displayGender: genderList.length > 1,
+            formName,
             basename,
             ext: PKM_FILE_EXT,
+            isAliasOf: null,
             path
           }
       
@@ -207,7 +214,8 @@ const getInventoryFiles = async (includeFiles, onlyGroups = null, addOutline = f
 module.exports = {
   dataPokedex,
   pathPokeSprite,
-  getSpriteFiles,
+  pkgPokeSprite,
+  getSpriteAssets,
   getPokemonFiles,
   getInventoryFiles,
   getMiscFiles

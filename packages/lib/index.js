@@ -3,27 +3,27 @@
 
 const { pick } = require('lodash')
 const { log } = require('dada-cli-tools/log')
-const { getSpriteFiles } = require('./sprite/assets')
-const { generateSprite } = require('./sprite/generate')
-const { generateHTML } = require('./sprite/html')
-const { saveAssets, saveStandardBuildAssets } = require('./sprite/save')
+const { generateSprite, generateDocs, getSpriteAssets, saveAssets, saveStandardBuildAssets } = require('./generator')
 
 /** List of special build functions. */
 const builds = {
   /** Default script - uses all the user's cli args. */
   default: async ({ assetTypes, optsPokemon, optsInventory, optsMisc, optsOutput }) => {
-    const assetData = await getSpriteFiles(assetTypes, { optsPokemon, optsInventory, optsMisc })
+    const assetData = await getSpriteAssets(assetTypes, { optsPokemon, optsInventory, optsMisc })
     const spriteData = await generateSprite(assetTypes, assetData, { optsOutput })
     return saveAssets(spriteData, { optsOutput })
   },
   /** Standard build - creates separate files for Pokémon, inventory items and misc sprites. Published to npm. */
-  buildStandard: async ({ optsPokemon, optsInventory, optsMisc, optsOutput }) => {
-    const assetData = await getSpriteFiles({ addPokemon: true, addInventory: true, addMisc: true }, { optsPokemon: { ...optsPokemon, pokemonGen: '8' }, optsInventory, optsMisc })
-    const pokemon = await generateSprite({ addPokemon: true }, assetData, { optsOutput })
-    const inventory = await generateSprite({ addInventory: true }, assetData, { optsOutput })
-    const misc = await generateSprite({ addMisc: true }, assetData, { optsOutput })
-    const overview = await generateHTML({ addPokemon: true, addInventory: true, addMisc: true }, { pokemon, inventory, misc })
-    return saveStandardBuildAssets({ pokemon, inventory, misc }, { optsOutput })
+  buildStandard: async (options, baseDir) => {
+    options.optsPokemon = { ...options.optsPokemon, pokemonGen: '8' }
+    const addAssets = { addPokemon: true, addInventory: true, addMisc: true }
+    const assetData = await getSpriteAssets(addAssets, options)
+    const pokemon = await generateSprite({ addPokemon: true }, assetData, options)
+    const inventory = await generateSprite({ addInventory: true }, assetData, options)
+    const misc = await generateSprite({ addMisc: true }, assetData, options)
+    const sprites = { pokemon, inventory, misc }
+    await generateDocs(addAssets, sprites, { ...options, pkgDir: baseDir })
+    return saveStandardBuildAssets(sprites, options)
   }
 }
 
@@ -44,15 +44,15 @@ const extractArgs = args => {
     optsPokemon: pick(args, ['noPokemonRegular', 'noPokemonShiny', 'noPokemonForms', 'noPokemonGender', 'noPokemonEtc', 'pokemonGen']),
     optsInventory: pick(args, ['inventoryGroups', 'addOutline']),
     optsMisc: pick(args, ['miscGroups']),
-    optsOutput: pick(args, ['noCSS', 'noImage', 'noHTML', 'outDir', 'outSuffix', 'clsLanguage', 'clsBasename'])
+    optsOutput: pick(args, ['noCSS', 'noImage', 'outDir', 'outSuffix', 'clsLanguage', 'clsBasename'])
   }
 }
 
 /** Checks what type of build the user requested and saves sprites based on cli args. */
-const main = async args => {
+const main = async (args, { baseDir }) => {
   const pickedArgs = extractArgs(args)
   const buildScript = getBuildScript(args)
-  const result = await buildScript(pickedArgs)
+  const result = await buildScript(pickedArgs, baseDir)
   process.exitCode = result
 }
 

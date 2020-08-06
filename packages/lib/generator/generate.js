@@ -2,7 +2,7 @@
 // © MIT license
 
 const { log } = require('dada-cli-tools/log')
-const { runSpritesmith } = require('./spritesmith')
+const { runSpritesmith } = require('../spritesmith')
 const { generateCSS } = require('./css')
 
 /**
@@ -13,11 +13,11 @@ const { generateCSS } = require('./css')
  * 
  * Prior to generating the sprite, a list of which Pokémon sprites to include will be generated.
  */
-const generateSprite = async (assetTypes, { fileInfo }, { optsOutput }) => {
+const generateSprite = async (assetTypes, { fileInfo }, { optsOutput, optsPokemon }) => {
   const [spriteFileInfo, spriteFileList] = pickFiles(assetTypes, { fileInfo })
   const sprite = await runSpritesmith(spriteFileList)
-  const [groupRules, spriteRules, overviewItems] = processRules(sprite.coordinates, spriteFileInfo, optsOutput.clsBasename)
-  const css = generateCSS(groupRules, spriteRules)
+  const [groupRules, spriteRules, overviewItems] = processRules(sprite.coordinates, spriteFileInfo, optsOutput.clsBasename, optsPokemon.pokemonGen)
+  const css = generateCSS(optsOutput, groupRules, spriteRules)
   return {
     css,
     items: overviewItems,
@@ -43,7 +43,7 @@ const processRules = (...args) => {
 }
 
 /** Generates group rules. */
-const getGroupRules = (rawCoordinates, fileInfo, baseClass) => {
+const getGroupRules = (rawCoordinates, fileInfo, baseClass, pokemonGen) => {
   const groupRules = {}
   for (const [path, coords] of Object.entries(rawCoordinates)) {
     const info = fileInfo[path]
@@ -52,20 +52,20 @@ const getGroupRules = (rawCoordinates, fileInfo, baseClass) => {
     if (info.type === 'pokemon') {
       if (groupRules[info.type]) continue
       selector = `.${baseClass}.${info.type}`
-      rules = { 'width': `${coords.width}px`, 'height': `${coords.height}px` }
+      rules = { 'width': `${coords.width}px`, 'height': `${coords.height}px`, 'background': `url('pokesprite-pokemon-gen${pokemonGen}.png')` }
       groupRules[info.type] = { selector, rules, resolution: '1x' }
     }
     if (info.type === 'inventory') {
       if (groupRules[info.group]) continue
       selector = `.${baseClass}.${info.group}`
-      rules = { 'width': `${coords.width}px`, 'height': `${coords.height}px` }
+      rules = { 'width': `${coords.width}px`, 'height': `${coords.height}px`, 'background': `url('pokesprite-inventory.png')` }
       groupRules[info.group] = { selector, rules, resolution: '1x' }
     }
     if (info.type === 'misc') {
       if (groupRules[info.group]) continue
       selector = `.${baseClass}.${info.group}`
       rules = {}
-      groupRules[info.group] = { selector, rules, resolution: '1x' }
+      groupRules[info.group] = { selector, rules, resolution: '1x', 'background': `url('pokesprite-misc.png')` }
     }
   }
   return Object.values(groupRules)
@@ -82,11 +82,20 @@ const getSpriteRules = (rawCoordinates, fileInfo, baseClass) => {
     if (info.type === 'pokemon') {
       // Iterate over form aliases. '$' is the default, others are aliases of the current file.
       for (const formName of info.formAliases) {
-        selectorBase = `${formName === '$' ? info.name : `${info.basename}-${formName}`}${info.group === 'shiny' ? '.shiny' : ''}`
+        selectorBase = getPokemonSelector(info.name, info.basename, formName, info.genderName, info.group === 'shiny')
         selector = `.${baseClass}.${selectorBase}`
         rules = { 'background-position-x': `-${coords.x}px`, 'background-position-y': `-${coords.y}px` }
         spriteRules.push({ selector, rules })
-        overviewLines.push({ selector: `.${baseClass}.pokemon.${selectorBase}`, info })
+        overviewLines.push({
+          selector: `.${baseClass}.pokemon.${selectorBase}`,
+          info: {
+            ...info,
+            // Save the new form name, if this is an alias.
+            formName: formName === '$' ? info.formName : formName,
+            // Save what form this is an alias of.
+            isAliasOf: formName === info.formName ? null : info.formName
+          }
+        })
       }
     }
     if (info.type === 'inventory') {
@@ -103,6 +112,14 @@ const getSpriteRules = (rawCoordinates, fileInfo, baseClass) => {
     }
   }
   return [spriteRules, overviewLines]
+}
+
+const getPokemonSelector = (name, basename, formName, genderName, isShiny) => {
+  let segments = []
+  if (isShiny) segments.push('shiny')
+  if (genderName === 'f') segments.push('female')
+  const baseSelector = formName === '$' ? name : `${basename}-${formName}`
+  return `${baseSelector}${segments.length ? `.${segments.join('.')}` : ''}`
 }
 
 module.exports = {

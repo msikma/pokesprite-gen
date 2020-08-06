@@ -1,6 +1,8 @@
 // pokesprite-gen-lib <https://github.com/msikma/pokesprite-gen>
 // © MIT license
 
+const fs = require('fs').promises
+
 /**
  * Takes an array of a boolean and a string, and returns a list of the strings for each boolean that is true.
  */
@@ -10,6 +12,13 @@ const keyList = (...keyVal) => {
     if (kv[0]) list.push(kv[1])
   }
   return list
+}
+
+/** Saves a file. */
+const saveFile = async (fn, path, buffer, binary) => {
+  const out = `${path}/${fn}`
+  fs.writeFile(out, buffer, binary ? 'binary' : 'utf8')
+  return out
 }
 
 /** Returns the Pokémon data set name for a directory. E.g. 'gen-7' for 'pokemon-gen7x'. */
@@ -29,6 +38,7 @@ const getBaseFromFn = fn => {
 
 module.exports = {
   keyList,
+  saveFile,
   pokemonDirSet,
   getBaseFromFn
 }

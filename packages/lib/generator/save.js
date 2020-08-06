@@ -1,13 +1,10 @@
 // pokesprite-gen-lib <https://github.com/msikma/pokesprite-gen>
 // © MIT license
 
-const fs = require('fs').promises
+const { saveFile } = require('./util')
 
 /**
  * Saves any assets the user generated.
- * 
- * 
- * TODO
  */
 const saveAssets = async ({ buffer, image, css }, { optsOutput }) => {
   let outImage
@@ -20,10 +17,6 @@ const saveAssets = async ({ buffer, image, css }, { optsOutput }) => {
     console.log(css)
     outCSS = await saveFile(outFilename(optsOutput, 'css'), optsOutput.outDir, css, false)
   }
-  if (!optsOutput.noHTML) {
-    //outCSS = await saveFile(outFilename(optsOutput, 'css'), optsOutput.outDir, css, false)
-  }
-  
   console.log(outImage, outCSS);
   console.log('--')
   return 0
@@ -32,24 +25,19 @@ const saveAssets = async ({ buffer, image, css }, { optsOutput }) => {
 /**
  * Saves three sprites for the standard build.
  */
-const saveStandardBuildAssets = async (files, { optsOutput }) => {
+const saveStandardBuildAssets = async (files, { optsPokemon, optsOutput }) => {
   for (const file of Object.keys(files)) {
-    await saveFile(outFilename({ ...optsOutput, outSuffix: file }, 'png'), optsOutput.outDir, files[file].buffer, true)
-    await saveFile(outFilename({ ...optsOutput, outSuffix: file }, 'css'), optsOutput.outDir, files[file].css, true)
+    const genSuffix = file === 'pokemon' ? `gen${optsPokemon.pokemonGen}` : null
+    await saveFile(outFilename({ ...optsOutput, outSuffixes: [file, genSuffix] }, 'png'), `${optsOutput.outDir}/assets`, files[file].buffer, true)
+    await saveFile(outFilename({ ...optsOutput, outSuffixes: [file, genSuffix] }, 'css'), `${optsOutput.outDir}/assets`, files[file].css, false)
   }
   return 0
 }
 
 /** Returns output filename. */
-const outFilename = ({ outSuffix }, ext) => {
-  return `pokesprite${outSuffix ? `_${outSuffix}` : ''}.${ext}`
-}
-
-/** Saves a file. */
-const saveFile = async (fn, path, buffer, binary) => {
-  const out = `${path}/${fn}`
-  fs.writeFile(out, buffer, binary ? 'binary' : 'utf8')
-  return out
+const outFilename = ({ outSuffixes }, ext) => {
+  const suffixes = outSuffixes.filter(n => n)
+  return `pokesprite${suffixes.length > 0 ? '-' : ''}${suffixes.join('-')}.${ext}`
 }
 
 module.exports = {

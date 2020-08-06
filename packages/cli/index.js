@@ -51,7 +51,6 @@ parser.addArgument('--cls-lang', { help: `Language to use for class names (defau
 parser.addArgument('--cls-basename', { help: `Base class name for icons ('pokesprite').`, defaultValue: 'pokesprite', metavar: 'NAME', dest: 'clsBasename' })
 parser.addArgument('--no-css', { help: 'Skips CSS file generation.', action: 'storeTrue', dest: 'noCSS' })
 parser.addArgument('--no-image', { help: 'Skips image file generation.', action: 'storeTrue', dest: 'noImage' })
-parser.addArgument('--no-overview', { help: 'Skips HTML overview file generation.', action: 'storeTrue', dest: 'noHTML' })
 parser.addArgument('--out-dir', { help: 'Output directory (defaults to the current directory).', metavar: 'DIR', dest: 'outDir', defaultValue: pkgPath })
 parser.addArgument('--out-suffix', { help: `Output filename suffix (defaults to 'sprite').`, metavar: 'STR', dest: 'outSuffix', defaultValue: 'sprite' })
 
