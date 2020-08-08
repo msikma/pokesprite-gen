@@ -1,13 +1,14 @@
 // pokesprite-gen-lib <https://github.com/msikma/pokesprite-gen>
 // © MIT license
 
-const { formatGender, formatForm } = require('./formatting')
+const { formatGender, formatGeneration, formatForm } = require('./formatting')
 
 const generateOverview = ({ addPokemon, addInventory, addMisc }, { pokemon, inventory, misc }, pokemonGen) => {
   const buffer = []
   buffer.push(...getTableHeader(pokemonGen))
 
   if (addPokemon) {
+    buffer.push(`<tbody class="gen8">`)
     buffer.push(getTableGroupHeader('Pokémon box sprites'))
 
     const groups = Object.entries(pokemon.items
@@ -27,30 +28,28 @@ const generateOverview = ({ addPokemon, addInventory, addMisc }, { pokemon, inve
         buffer.push(getPokemonRow(item.selector, item.info, n, group.length))
       })
     })
+
+    buffer.push(`</tbody>`)
   }
 
   if (addInventory) {
+    buffer.push(`<tbody>`)
     buffer.push(getTableGroupHeader('Inventory item sprites'))
-    buffer.push(`<tr class="header"><th>–</th><th>Name</th><th colspan="2">Item ID</th><th class="spritesheet-sprite" colspan="2">Sprite</th><th colspan="3">Group</th><th>Selector</th></tr>`)
+    buffer.push(`<tr class="header"><th></th><th>Name</th><th colspan="2">Item ID</th><th class="spritesheet-sprite" colspan="2">Sprite</th><th colspan="3">Group</th><th>Selector</th></tr>`)
     inventory.items.forEach(item => buffer.push(getInventoryRow(item.selector, item.info)))
+    buffer.push(`</tbody>`)
+  }
+
+  if (addMisc) {
+    buffer.push(`<tbody class="variable-height">`)
+    buffer.push(getTableGroupHeader('Miscellaneous sprites'))
+    buffer.push(`<tr class="header"><th></th><th>Name</th><th colspan="2">名前</th><th class="spritesheet-sprite" colspan="2">Sprite</th><th colspan="3">Gen</th><th>Selector</th></tr>`)
+    misc.items.forEach(item => buffer.push(getMiscRow(item.selector, item.info)))
+    buffer.push(`</tbody>`)
   }
   
   buffer.push(...getTableFooter())
   return buffer.join('\n')
-}
-
-const getInventoryRow = (selector, info) => {
-  console.log(selector, info)
-  return `
-    <tr>
-      <td></td>
-      <td>${info.name}</td>
-      <td colspan="2"><code>${info.name}</code></td>
-      <td colspan="2">${getSprite(selector)}</td>
-      <td colspan="3">${info.group}</td>
-      <td><code>${selector}</code></td>
-    </tr>
-  `
 }
 
 const getPokemonRow = (selector, info, n, total) => {
@@ -73,10 +72,38 @@ const getPokemonRow = (selector, info, n, total) => {
         <td rowspan="${total}">${name.jpn_ro}</td>
       ` : ''}
       <td class="image pokemon">${getSprite(selector)}</td>
-      <td class="image pokemon">${getSprite(selector, true)}</td>
+      <td class="image pokemon shiny">${getSprite(selector, true)}</td>
       ${formatForm(info.formName, formCols, isAliasOf, isUnofficialIcon, isUnofficialFemaleIcon)}
       ${formatGender(genderName, displayGender)}
-      <td><code>${selector}</code></td>
+      <td class="selector"><code>${selector}</code></td>
+    </tr>
+  `
+}
+
+const getInventoryRow = (selector, info) => {
+  const { name, group, itemID } = info
+  return `
+    <tr>
+      <td></td>
+      <td>${name}</td>
+      <td colspan="2" class="item-id">${itemID ? `<code>${itemID}</code>` : '–'}</td>
+      <td colspan="2" class="image item">${getSprite(selector)}</td>
+      <td colspan="3">${group}</td>
+      <td class="selector"><code>${selector}</code></td>
+    </tr>
+  `
+}
+
+const getMiscRow = (selector, info) => {
+  const { data, fileGen, fileResolution } = info
+  return `
+    <tr>
+      <td></td>
+      <td>${data.name.eng}</td>
+      <td colspan="2">${data.name.jpn}</td>
+      <td colspan="2" class="image item">${getSprite(selector)}</td>
+      <td colspan="3">${formatGeneration(fileGen)}</td>
+      <td class="selector"><code>${selector}</code></td>
     </tr>
   `
 }
@@ -87,18 +114,16 @@ const getTableGroupHeader = str => `<tr><th></th><th class="group" colspan="9">$
 
 const getTableHeader = (gen) => splitLines(
   `
-  <table class="pokesprite gen${gen} pokesprite-spritesheet">
+  <table class="pokesprite pokesprite-spritesheet">
     <thead>
       <tr class="title"><th></th><th colspan="9">PokéSprite spritesheet overview table</th></tr>
       <tr class="header"><th>Dex</th><th>Name</th><th colspan="2">名前/ローマ字</th><th class="spritesheet-sprite" colspan="2">Sprites</th><th colspan="3">Form</th><th>Selector</th></tr>
     </thead>
-    <tbody>
   `
 )
 
 const getTableFooter = () => splitLines(
   `
-    </tbody>
     <tfoot>
       <tr>
         <td></td>

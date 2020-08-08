@@ -3,12 +3,15 @@
 
 const fg = require('fast-glob')
 const { splitFilename } = require('dada-cli-tools/util/fs')
+const { invert } = require('lodash')
 const { keyList, pokemonDirSet, getBaseFromFn } = require('./util.js')
 
 /** The Pokémon data file containing a list of species and forms. */
 const dataPokedex = require('pokesprite-images/data/pokemon.json')
 /** Other Pokémon-sized sprites (egg, egg-manaphy, etc.). */
 const dataPokemonEtc = require('pokesprite-images/data/other-sprites.json')
+/** Inventory item sprites. Reversed; 'group/item' => 'item_id'. */
+const dataItems = invert(require('pokesprite-images/data/item-map.json'))
 /** Miscellaneous sprites (ribbons, marks, etc.). */
 const dataMisc = require('pokesprite-images/data/misc.json')
 /** Path to the PokéSprite files. */
@@ -131,12 +134,11 @@ const getPokemonFiles = async (includeFiles, opts = {}, type = 'pokemon', dir = 
  *     ext: 'png',
  *     path: '/path/to/pokesprite/items/apricorn/blue.png' }
  * 
- * Returns an object of all sprite groups, and an object containing sprite data by file path.
+ * Returns an object of all sprite groups.
  */
 const globAssets = async (includeFiles, type, dir, onlyGroups = null) => {
   if (!includeFiles) return [{}, {}]
   const files = await fg(`${dir}/**/*.png`, { cwd: pathPokeSprite, onlyFiles: true, followSymbolicLinks: false })
-  const allFiles = {}
   const groups = {}
   for (const file of files) {
     const [group, ...fnSegments] = file.split('/').slice(1)
@@ -158,9 +160,8 @@ const globAssets = async (includeFiles, type, dir, onlyGroups = null) => {
     }
 
     groups[group].push(fileData)
-    allFiles[path] = fileData
   }
-  return [groups, allFiles]
+  return groups
 }
 
 /**
@@ -189,6 +190,8 @@ const getMiscFiles = async (includeFiles, onlyGroups = null, dir = 'misc', type 
             dir,
             data: item,
             name,
+            fileGen: gen,
+            fileResolution: res,
             group: groupName,
             ext: extension,
             path
@@ -205,10 +208,25 @@ const getMiscFiles = async (includeFiles, onlyGroups = null, dir = 'misc', type 
 }
 
 /**
- * Returns inventory sprites.
+ * Returns inventory sprites. Same format as globAssets(), except that an item ID is included as well.
+ * 
+ * Returns an object of all inventory sprite groups, and an object containing sprite data by file path.
  */
 const getInventoryFiles = async (includeFiles, onlyGroups = null, addOutline = false) => {
-  return globAssets(includeFiles, 'inventory', addOutline ? 'items-outline' : 'items', onlyGroups)
+  const groups = await globAssets(includeFiles, 'inventory', addOutline ? 'items-outline' : 'items', onlyGroups)
+  const allFiles = {}
+
+  // Add item ID where applicable (some are null), and add all items to the 'allFiles' object by path.
+  for (const group of Object.values(groups)) {
+    for (const item of group) {
+      const { group, name, path } = item
+      const groupAndName = `${group}/${name}`
+      const itemID = dataItems[groupAndName]
+      item.itemID = itemID
+      allFiles[path] = item
+    }
+  }
+  return [groups, allFiles]
 }
 
 module.exports = {

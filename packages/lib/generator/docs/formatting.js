@@ -31,6 +31,19 @@ const formatForm = (formName, formCols, isAliasOf, isUnofficialIcon, isUnofficia
   `
 }
 
+/** Formats a generation name (e.g. 'gen-8' or 'masters'). */
+const formatGeneration = (genName) => {
+  if (!genName) return null
+  if (genName.includes('-')) {
+    const gen = genName.split('-')
+    return `Gen ${gen[1]}`
+  }
+  return toSentenceCase(genName)
+}
+
+/** Sets the first letter in a string to uppercase. */
+const toSentenceCase = str => str ? `${str.slice(0, 1).toUpperCase()}${str.slice(1)}` : null
+
 /** Wraps content inside of an <attr> tag. Used by formatForm() to indicate sprite notes. */
 const wrapInAttr = (title, content, isDoubleDagger = false) => {
   return `<attr title="${title}"><span>${content}</span>${isDoubleDagger ? '‡' : '†'}</attr>`
@@ -38,5 +51,6 @@ const wrapInAttr = (title, content, isDoubleDagger = false) => {
 
 module.exports = {
   formatGender,
+  formatGeneration,
   formatForm
 }

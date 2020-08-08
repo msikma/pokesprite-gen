@@ -64,8 +64,8 @@ const getGroupRules = (rawCoordinates, fileInfo, baseClass, pokemonGen) => {
     if (info.type === 'misc') {
       if (groupRules[info.group]) continue
       selector = `.${baseClass}.${info.group}`
-      rules = {}
-      groupRules[info.group] = { selector, rules, resolution: '1x', 'background': `url('pokesprite-misc.png')` }
+      rules = { 'background': `url('pokesprite-misc.png')` }
+      groupRules[info.group] = { selector, rules, resolution: '1x' }
     }
   }
   return Object.values(groupRules)
@@ -106,7 +106,7 @@ const getSpriteRules = (rawCoordinates, fileInfo, baseClass) => {
     }
     if (info.type === 'misc') {
       selector = `.${baseClass}.${info.group}.${info.name}`
-      rules = { 'width': `${coords.width}`, height: `${coords.height}`, 'background-position-x': `-${coords.x}px`, 'background-position-y': `-${coords.y}px` }
+      rules = { 'width': `${coords.width}px`, height: `${coords.height}px`, 'background-position-x': `-${coords.x}px`, 'background-position-y': `-${coords.y}px` }
       spriteRules.push({ selector, rules })
       overviewLines.push({ selector, info })
     }
