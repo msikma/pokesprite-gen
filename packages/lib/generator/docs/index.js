@@ -3,12 +3,14 @@
 
 const copyTemplateDir = require('copy-template-dir')
 const { generateOverview } = require('./overview')
+const { generateTeaser } = require('./teaser')
 const { pkgPokeSprite } = require('../assets')
 
 /** Generates documentation for this build. */
 const generateDocs = async (includedTypes, spriteData, { optsOutput, optsPokemon, pkgDir }) => {
-  const overview = await generateOverview(includedTypes, spriteData, optsPokemon.pokemonGen)
-  await copyTemplate({ optsOutput, pkgDir, overview })
+  const overview = generateOverview(includedTypes, spriteData, optsPokemon.pokemonGen)
+  const teaser = generateTeaser(includedTypes, spriteData)
+  await copyTemplate({ optsOutput, pkgDir, overview, teaser })
   return {
     overview
   }
@@ -22,10 +24,11 @@ const copyTemplate = async ({ optsOutput, pkgDir, overview }) => {
 }
 
 /** Returns templates to use for copying over templates. */
-const getTemplateVars = (pkgPokeSprite, { clsBasename }, overview) => ({
+const getTemplateVars = (pkgPokeSprite, { clsBasename }, overview, teaser) => ({
   version: pkgPokeSprite.version,
   clsBasename,
-  overview
+  overview,
+  teaser
 })
 
 /** Promisified version of copyTemplateDir. */
