@@ -117,7 +117,24 @@ const getPokemonFiles = async (includeFiles, opts = {}, type = 'pokemon', dir = 
       }
     }
   }
-  //dataPokemonEtc
+
+  // Add the remaining box sprites that aren't Pokémon but are the same size (egg, mega symbol, etc.)
+  for (const item of dataPokemonEtc.pokemon) {
+    const path = `${pathPokeSprite}/${dir}/${item.file}.${PKM_FILE_EXT}`
+    const fileData = {
+      type,
+      dir,
+      data: item,
+      name: item.slug[PKM_FILE_SLUG_LANG],
+      formAliases: ['$'],
+      group: 'etc',
+      ext: PKM_FILE_EXT,
+      path
+    }
+      
+    pokemon.push(fileData)
+    allFiles[path] = fileData
+  }
   return [pokemon, allFiles]
 }
 

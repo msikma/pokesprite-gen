@@ -3,6 +3,11 @@
 
 const { formatGender, formatGeneration, formatForm } = require('./formatting')
 
+/**
+ * Generates an overview page of all sprites included in the generated spritesheet.
+ * 
+ * Unlike the main PokéSprite overview pages, all included sprites are on one page for simplicity.
+ */
 const generateOverview = ({ addPokemon, addInventory, addMisc }, { pokemon, inventory, misc }, pokemonGen) => {
   const buffer = []
   buffer.push(...getTableHeader(pokemonGen))
@@ -11,8 +16,10 @@ const generateOverview = ({ addPokemon, addInventory, addMisc }, { pokemon, inve
     buffer.push(`<tbody class="gen8">`)
     buffer.push(getTableGroupHeader('Pokémon box sprites'))
 
+    // Take only non-shiny Pokémon (since we'll display regular and shiny side by side)
+    // and group them by dex number to get evolution families, then sort them.
     const groups = Object.entries(pokemon.items
-      // Remove all shiny Pokémon (since we'll display regular and shiny side by side)
+      // Remove all shiny Pokémon
       .filter(item => item.info.group === 'regular')
       // Group by index number
       .reduce((all, item) => {
@@ -22,11 +29,19 @@ const generateOverview = ({ addPokemon, addInventory, addMisc }, { pokemon, inve
       }, {}))
       .sort((a, b) => Number(a[0]) > Number(b[0]) ? 1 : -1)
     
+    // Filter out all Pokémon to get the alternate items such as "egg", "mega", etc.
+    const etc = Object.values(pokemon.items).filter(item => item.info.group === 'etc')
+    
     // Add rows for each Pokémon in each group.
     groups.forEach(([_, group]) => {
       group.forEach((item, n) => {
-        buffer.push(getPokemonRow(item.selector, item.info, n, group.length))
+        buffer.push(getPokemonRow(item.selector, item.info, true, n, group.length))
       })
+    })
+
+    // Add rows for all alternate items.
+    etc.forEach(item => {
+      buffer.push(getPokemonRow(item.selector, item.info, false))
     })
 
     buffer.push(`</tbody>`)
@@ -52,12 +67,13 @@ const generateOverview = ({ addPokemon, addInventory, addMisc }, { pokemon, inve
   return buffer.join('\n')
 }
 
-const getPokemonRow = (selector, info, n, total) => {
+/** Returns a <tr> for a Pokémon. */
+const getPokemonRow = (selector, info, isRegularPokemon = true, n = 0, total = 1) => {
   const { data, genderName, displayGender, isAliasOf, formData } = info
   const { idx, name } = data
   
-  const isUnofficialFemaleIcon = genderName === 'f' && formData.has_unofficial_female_icon
-  const isUnofficialIcon = formData.is_unofficial_icon
+  const isUnofficialFemaleIcon = genderName === 'f' && formData && formData.has_unofficial_female_icon
+  const isUnofficialIcon = formData && formData.is_unofficial_icon
   let formCols = 3
   if (displayGender) {
     formCols -= 1
@@ -65,21 +81,32 @@ const getPokemonRow = (selector, info, n, total) => {
 
   return `
     <tr>
-      ${n === 0 ? `
-        <td rowspan="${total}">#${idx}</td>
-        <td rowspan="${total}">${name.eng}</td>
-        <td rowspan="${total}">${name.jpn}</td>
-        <td rowspan="${total}">${name.jpn_ro}</td>
-      ` : ''}
-      <td class="image pokemon">${getSprite(selector)}</td>
-      <td class="image pokemon shiny">${getSprite(selector, true)}</td>
-      ${formatForm(info.formName, formCols, isAliasOf, isUnofficialIcon, isUnofficialFemaleIcon)}
-      ${formatGender(genderName, displayGender)}
+      ${isRegularPokemon ? `
+        ${n === 0 ? `
+          <td rowspan="${total}">${idx ? `#${idx}` : ''}</td>
+          <td rowspan="${total}">${name.eng}</td>
+          <td rowspan="${total}">${name.jpn}</td>
+          <td rowspan="${total}">${name.jpn_ro}</td>
+        ` : ''}
+        <td class="image pokemon">${getSprite(selector)}</td>
+        <td class="image pokemon shiny">${getSprite(selector, true)}</td>
+        ${formatForm(info.formName, formCols, isAliasOf, isUnofficialIcon, isUnofficialFemaleIcon)}
+        ${formatGender(genderName, displayGender)}
+      ` : `
+        ${n === 0 ? `
+          <td rowspan="${total}">${idx ? `#${idx}` : ''}</td>
+          <td rowspan="${total}">${name.eng}</td>
+          <td rowspan="${total}" colspan="2" title="${name.jpn_ro}">${name.jpn}</td>
+        ` : ''}
+        <td class="image pokemon centered" colspan="2">${getSprite(selector)}</td>
+        <td colspan="3">–</td>
+      `}
       <td class="selector"><code>${selector}</code></td>
     </tr>
   `
 }
 
+/** Returns a <tr> for an inventory item. */
 const getInventoryRow = (selector, info) => {
   const { name, group, itemID } = info
   return `
@@ -94,6 +121,7 @@ const getInventoryRow = (selector, info) => {
   `
 }
 
+/** Returns a <tr> for a miscellaneous item. */
 const getMiscRow = (selector, info) => {
   const { data, fileGen, fileResolution } = info
   return `
@@ -108,10 +136,13 @@ const getMiscRow = (selector, info) => {
   `
 }
 
+/** Returns a PokéSprite <span> sprite for a certain selector. */
 const getSprite = (selector, isShiny) => `<span class="${selector.split('.').join(' ').trim()}${isShiny ? ` shiny` : ''}"></span>`
 
+/** Returns a header for a new section in the table. */
 const getTableGroupHeader = str => `<tr><th></th><th class="group" colspan="9">${str}</th></tr>`
 
+/** Returns the main table top header. */
 const getTableHeader = (gen) => splitLines(
   `
   <table class="pokesprite pokesprite-spritesheet">
@@ -122,6 +153,7 @@ const getTableHeader = (gen) => splitLines(
   `
 )
 
+/** Returns the main table bottom footer. */
 const getTableFooter = () => splitLines(
   `
     <tfoot>
