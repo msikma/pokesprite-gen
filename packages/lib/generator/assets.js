@@ -35,7 +35,7 @@ const getSpriteAssets = async ({ addPokemon, addInventory, addMisc }, { optsPoke
   const [dataInventoryGroups, inventoryFiles] = await getInventoryFiles(addInventory, optsInventory.inventoryGroups, optsInventory.addOutline)
   const [dataMiscGroups, miscFiles] = await getMiscFiles(addMisc, optsMisc.miscGroups)
   const fileInfo = { pokemonFiles, inventoryFiles, miscFiles }
-
+  
   return {
     dataPokemon,
     dataInventoryGroups,
@@ -155,7 +155,7 @@ const getPokemonFiles = async (includeFiles, opts = {}, type = 'pokemon', dir = 
  */
 const globAssets = async (includeFiles, type, dir, onlyGroups = null) => {
   if (!includeFiles) return [{}, {}]
-  const files = await fg(`${dir}/**/*.png`, { cwd: pathPokeSprite, onlyFiles: true, followSymbolicLinks: false })
+  const files = await fg(`${dir}/**/*.png`, { cwd: pathPokeSprite, onlyFiles: true, followSymbolicLinks: false, concurrency: 1 })
   const groups = {}
   for (const file of files) {
     const [group, ...fnSegments] = file.split('/').slice(1)
