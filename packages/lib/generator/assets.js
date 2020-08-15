@@ -35,7 +35,7 @@ const getSpriteAssets = async ({ addPokemon, addInventory, addMisc }, { optsPoke
   const [dataInventoryGroups, inventoryFiles] = await getInventoryFiles(addInventory, optsInventory.inventoryGroups, optsInventory.addOutline)
   const [dataMiscGroups, miscFiles] = await getMiscFiles(addMisc, optsMisc.miscGroups)
   const fileInfo = { pokemonFiles, inventoryFiles, miscFiles }
-  
+
   return {
     dataPokemon,
     dataInventoryGroups,
@@ -119,22 +119,25 @@ const getPokemonFiles = async (includeFiles, opts = {}, type = 'pokemon', dir = 
   }
 
   // Add the remaining box sprites that aren't Pokémon but are the same size (egg, mega symbol, etc.)
-  for (const item of dataPokemonEtc.pokemon) {
-    const path = `${pathPokeSprite}/${dir}/${item.file}.${PKM_FILE_EXT}`
-    const fileData = {
-      type,
-      dir,
-      data: item,
-      name: item.slug[PKM_FILE_SLUG_LANG],
-      formAliases: ['$'],
-      group: 'etc',
-      ext: PKM_FILE_EXT,
-      path
+  if (addEtc) {
+    for (const item of dataPokemonEtc.pokemon) {
+      const path = `${pathPokeSprite}/${dir}/${item.file}.${PKM_FILE_EXT}`
+      const fileData = {
+        type,
+        dir,
+        data: item,
+        name: item.slug[PKM_FILE_SLUG_LANG],
+        formAliases: ['$'],
+        group: 'etc',
+        ext: PKM_FILE_EXT,
+        path
+      }
+        
+      pokemon.push(fileData)
+      allFiles[path] = fileData
     }
-      
-    pokemon.push(fileData)
-    allFiles[path] = fileData
   }
+  
   return [pokemon, allFiles]
 }
 
