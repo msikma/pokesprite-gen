@@ -52,19 +52,19 @@ const getGroupRules = (rawCoordinates, fileInfo, baseClass, pokemonGen) => {
     if (info.type === 'pokemon') {
       if (groupRules[info.type]) continue
       selector = `.${baseClass}.${info.type}`
-      rules = { 'width': `${coords.width}px`, 'height': `${coords.height}px`, 'background': `url('pokesprite-pokemon-gen${pokemonGen}.png')` }
+      rules = { 'width': `${coords.width}px`, 'height': `${coords.height}px`, 'background-image': `url('pokesprite-pokemon-gen${pokemonGen}.png')` }
       groupRules[info.type] = { selector, rules, resolution: '1x' }
     }
     if (info.type === 'inventory') {
       if (groupRules[info.group]) continue
       selector = `.${baseClass}.${info.group}`
-      rules = { 'width': `${coords.width}px`, 'height': `${coords.height}px`, 'background': `url('pokesprite-inventory.png')` }
+      rules = { 'width': `${coords.width}px`, 'height': `${coords.height}px`, 'background-image': `url('pokesprite-inventory.png')` }
       groupRules[info.group] = { selector, rules, resolution: '1x' }
     }
     if (info.type === 'misc') {
       if (groupRules[info.group]) continue
       selector = `.${baseClass}.${info.group}`
-      rules = { 'background': `url('pokesprite-misc.png')` }
+      rules = { 'background-image': `url('pokesprite-misc.png')` }
       groupRules[info.group] = { selector, rules, resolution: '1x' }
     }
   }
