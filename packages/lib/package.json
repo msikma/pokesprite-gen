@@ -14,7 +14,7 @@
     "dada-cli-tools": "^1.0.0",
     "fast-glob": "^3.2.4",
     "layout": "^2.0.0",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "copy-template-dir": "^1.4.0",
     "pokesprite-images": "^2.1.0",
     "spritesmith": "^3.4.0"
